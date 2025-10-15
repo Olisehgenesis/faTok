@@ -3,24 +3,42 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
-    "start": "next start",
+    "dev": "concurrently \"npm run dev:next\" \"npm run dev:mediasoup\"",
+    "dev:next": "next dev --turbopack -p 3003",
+    "dev:mediasoup": "tsx mediasoup-server.ts",
+    "build": "prisma generate && next build --turbopack",
+    "start": "concurrently \"npm run start:next\" \"npm run start:mediasoup\"",
+    "start:next": "next start -p 3003",
+    "start:mediasoup": "tsx mediasoup-server.ts",
     "lint": "biome check",
-    "format": "biome format --write"
+    "format": "biome format --write",
+    "prisma": "prisma",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev --name init",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@prisma/client": "^6.17.1",
+    "mediasoup": "^3.19.3",
+    "mediasoup-client": "^3.6.105",
+    "next": "15.5.5",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "next": "15.5.5"
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@biomejs/biome": "2.2.0",
+    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
+    "@types/socket.io": "^3.0.2",
+    "concurrently": "^8.2.2",
+    "prisma": "^6.17.1",
     "tailwindcss": "^4",
-    "@biomejs/biome": "2.2.0"
-  }
+    "tsx": "^4.7.0",
+    "typescript": "^5"
+  },
+  "packageManager": "pnpm@10.11.0+sha512.6540583f41cc5f628eb3d9773ecee802f4f9ef9923cc45b69890fb47991d4b092964694ec3a4f738a420c918a333062c8b925d312f42e4f0c263eb603551f977"
 }
