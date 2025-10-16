@@ -1,11 +1,11 @@
-# VexoSocial - MediaSoup Live Streaming App
+# VexoSocial - Ion SFU Live Streaming App
 
-A Next.js application with MediaSoup for real-time live streaming with 6-digit room IDs.
+A Next.js application with Ion SFU for real-time live streaming with 6-digit room IDs.
 
 ## Features
 
 - ✅ 6-digit room ID generation
-- ✅ MediaSoup WebRTC live streaming
+- ✅ Ion SFU WebRTC live streaming
 - ✅ Real-time chat
 - ✅ Session tracking in database
 - ✅ Creator/Viewer roles
@@ -31,14 +31,14 @@ A Next.js application with MediaSoup for real-time live streaming with 6-digit r
    ```
 
 This will start both:
-- **Next.js app** at `http://localhost:3003`
-- **MediaSoup server** at `http://localhost:3004`
+- **Next.js app** at `http://localhost:3002`
+- **Ion SFU server** at `ws://localhost:7000/ws`
 
 ## How it works
 
 1. **Create Live**: Generates a 6-digit room ID and marks you as the creator
 2. **Join Live**: Enter a 6-digit room ID to join as a viewer
-3. **Broadcasting**: Creator's camera stream is broadcast via MediaSoup
+3. **Broadcasting**: Creator's camera stream is broadcast via Ion SFU
 4. **Viewing**: Viewers receive the live stream in real-time
 5. **Chat**: Real-time chat messages are stored in the database
 

@@ -1,7 +1,6 @@
 const { createServer } = require('https');
 const { readFileSync } = require('fs');
 const next = require('next');
-const MediaSoupServer = require('./lib/mediasoup-server');
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = 'localhost';
@@ -29,14 +28,10 @@ app.prepare().then(() => {
     }
   });
 
-  // Initialize MediaSoup server
-  const mediaSoupServer = new MediaSoupServer();
-  mediaSoupServer.initialize(server);
-
   // Start server
   server.listen(port, (err) => {
     if (err) throw err;
     console.log(`> Ready on https://${hostname}:${port}`);
-    console.log(`> MediaSoup server running on port ${port}`);
+    console.log(`> Next.js server running on port ${port}`);
   });
 });
