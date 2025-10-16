@@ -1,26 +1,190 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* VexoSocial Purple Accent Palette */
+  --background-primary: #0D0D0D;
+  --background-secondary: #1A1A1A;
+  --background-tertiary: #2A2A2A;
+  
+  --purple-primary: #A259FF;
+  --purple-secondary: #6C2BD9;
+  --purple-tertiary: #D6B4FF;
+  --purple-dark: #4A1A8A;
+  
+  --text-primary: #FFFFFF;
+  --text-secondary: #B3B3B3;
+  --text-tertiary: #808080;
+  --text-accent: #A259FF;
+  
+  --status-live: #FF4444;
+  --status-success: #00D4AA;
+  --status-warning: #FFB800;
+  --status-error: #FF6B6B;
+  
+  --overlay-dark: rgba(0, 0, 0, 0.7);
+  --overlay-medium: rgba(0, 0, 0, 0.5);
+  --overlay-light: rgba(0, 0, 0, 0.3);
+  --overlay-purple: rgba(162, 89, 255, 0.1);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--background-primary);
+  --color-foreground: var(--text-primary);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+body {
+  background: var(--background-primary);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--purple-secondary);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--purple-primary);
+}
+
+/* Mobile-first responsive design */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Utility classes for VexoSocial */
+.vexo-gradient {
+  background: linear-gradient(135deg, var(--purple-primary) 0%, var(--purple-secondary) 100%);
+}
+
+.vexo-gradient-text {
+  background: linear-gradient(135deg, var(--purple-primary) 0%, var(--purple-tertiary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.vexo-glass {
+  background: rgba(26, 26, 26, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(162, 89, 255, 0.2);
+}
+
+.vexo-shadow-purple {
+  box-shadow: 0 4px 14px 0 rgba(162, 89, 255, 0.3);
+}
+
+/* Subtle grid background */
+.vexo-grid-bg {
+  position: relative;
+}
+.vexo-grid-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(var(--overlay-light) 1px, transparent 1px),
+    linear-gradient(90deg, var(--overlay-light) 1px, transparent 1px);
+  background-size: 24px 24px, 24px 24px;
+  background-position: -1px -1px;
+  pointer-events: none;
+}
+
+.vexo-button-primary {
+  background: var(--purple-primary);
+  color: var(--text-primary);
+  border: none;
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 14px 0 rgba(162, 89, 255, 0.3);
+}
+
+.vexo-button-primary:hover {
+  background: var(--purple-secondary);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px 0 rgba(162, 89, 255, 0.4);
+}
+
+.vexo-button-secondary {
+  background: transparent;
+  color: var(--purple-primary);
+  border: 2px solid var(--purple-primary);
+  border-radius: 12px;
+  padding: 10px 22px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.vexo-button-secondary:hover {
+  background: var(--purple-primary);
+  color: var(--text-primary);
+}
+
+.vexo-input {
+  background: var(--background-secondary);
+  border: 1px solid var(--purple-secondary);
+  border-radius: 12px;
+  padding: 16px 20px;
+  color: var(--text-primary);
+  font-size: 16px;
+  width: 100%;
+  transition: border-color 0.3s ease;
+}
+
+.vexo-input:focus {
+  outline: none;
+  border-color: var(--purple-primary);
+  box-shadow: 0 0 0 3px rgba(162, 89, 255, 0.1);
+}
+
+.vexo-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.vexo-card {
+  background: var(--background-secondary);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--background-tertiary);
+}
+
+.vexo-live-badge {
+  background: var(--status-live);
+  color: var(--text-primary);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }

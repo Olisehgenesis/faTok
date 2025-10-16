@@ -82,14 +82,31 @@ export class IonSFUClient {
       // Set up event handlers
       this.setupEventHandlers();
       
-      // Join the session when signal opens
-      this.signal.onopen = () => {
-        console.log('🔗 Signal connected, joining session...');
-        this.client.join(sessionId);
-      };
-      
-      console.log('✅ Ion-SFU client initialized');
-      return this.client;
+      // Return a promise that resolves when the session is joined
+      return new Promise((resolve, reject) => {
+        // Join the session when signal opens
+        this.signal.onopen = async () => {
+          try {
+            console.log('🔗 Signal connected, joining session...');
+            await this.client.join(sessionId);
+            console.log('✅ Successfully joined session');
+            resolve(this.client);
+          } catch (error) {
+            console.error('❌ Error joining session:', error);
+            reject(error);
+          }
+        };
+        
+        this.signal.onerror = (error: any) => {
+          console.error('❌ Signal connection error:', error);
+          reject(error);
+        };
+        
+        // Set a timeout to reject if connection takes too long
+        setTimeout(() => {
+          reject(new Error('Connection timeout'));
+        }, 10000);
+      });
     } catch (error) {
       console.error('❌ Error initializing Ion-SFU client:', error);
       throw error;
@@ -99,20 +116,9 @@ export class IonSFUClient {
   private setupEventHandlers() {
     if (!this.client || !this.signal) return;
 
-    // Handle connection open
-    this.signal.onopen = async () => {
-      console.log('🔗 Ion-SFU signal connected');
-      console.log(`✅ Connected to session: ${this.sessionId}`);
-    };
-
     // Handle connection close
-    this.signal.onclose = () => {
-      console.log('❌ Ion-SFU signal disconnected');
-    };
-
-    // Handle connection error
-    this.signal.onerror = (error: any) => {
-      console.error('❌ Ion-SFU signal error:', error);
+    this.signal.onclose = (event: any) => {
+      console.log('❌ Ion-SFU signal disconnected:', event);
     };
 
     // Handle incoming tracks
@@ -123,11 +129,16 @@ export class IonSFUClient {
         label: track.label,
         enabled: track.enabled,
         muted: track.muted,
-        readyState: track.readyState
+        readyState: track.readyState,
+        streamId: stream.id,
+        streamTracks: stream.getTracks().length
       });
       
       if (this.onTrack) {
+        console.log('📤 Calling onTrack callback...');
         this.onTrack(track, stream);
+      } else {
+        console.log('⚠️ No onTrack callback set');
       }
     };
 
@@ -153,11 +164,13 @@ export class IonSFUClient {
 
     try {
       // Load Ion-SFU SDK dynamically
-      const { LocalStream: LocalStreamClass } = await loadIonSDK();
+      const sdkComponents = await loadIonSDK();
       
-      if (!LocalStreamClass) {
+      if (!sdkComponents || !sdkComponents.LocalStream) {
         throw new Error('Failed to load Ion-SFU SDK');
       }
+      
+      const { LocalStream: LocalStreamClass } = sdkComponents;
       
       // Publish the stream directly (LocalStream handles MediaStream internally)
       await this.client.publish(stream);
@@ -179,11 +192,13 @@ export class IonSFUClient {
 
     try {
       // Load Ion-SFU SDK dynamically
-      const { LocalStream: LocalStreamClass } = await loadIonSDK();
+      const sdkComponents = await loadIonSDK();
       
-      if (!LocalStreamClass) {
+      if (!sdkComponents || !sdkComponents.LocalStream) {
         throw new Error('Failed to load Ion-SFU SDK');
       }
+      
+      const { LocalStream: LocalStreamClass } = sdkComponents;
       
       // Use LocalStream.getUserMedia for camera
       const media = await LocalStreamClass.getUserMedia({
@@ -211,11 +226,13 @@ export class IonSFUClient {
 
     try {
       // Load Ion-SFU SDK dynamically
-      const { LocalStream: LocalStreamClass } = await loadIonSDK();
+      const sdkComponents = await loadIonSDK();
       
-      if (!LocalStreamClass) {
+      if (!sdkComponents || !sdkComponents.LocalStream) {
         throw new Error('Failed to load Ion-SFU SDK');
       }
+      
+      const { LocalStream: LocalStreamClass } = sdkComponents;
       
       // Use LocalStream.getDisplayMedia for screen sharing
       const media = await LocalStreamClass.getDisplayMedia({
@@ -241,9 +258,15 @@ export class IonSFUClient {
     }
 
     console.log('👀 Starting to subscribe to streams...');
+    console.log('📡 Client state:', {
+      hasClient: !!this.client,
+      sessionId: this.sessionId,
+      signalState: this.signal?.readyState
+    });
     
     // The client will automatically receive tracks via the ontrack handler
     // No additional setup needed for subscribing
+    console.log('✅ Subscription setup complete - waiting for incoming tracks');
   }
 
   setOnTrack(callback: (track: MediaStreamTrack, stream: MediaStream) => void) {

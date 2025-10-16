@@ -1,6 +1,5 @@
 "use client";
 
-import { create } from "react-use-subscription";
 import { useSyncExternalStore } from "react";
 
 type ChatMessage = {
@@ -14,7 +13,7 @@ class ClientSessionStore {
   private deviceCount = 0;
   private chatMessages: ChatMessage[] = [];
   private listeners = new Set<() => void>();
-  private cachedSnapshot = {
+  cachedSnapshot = {
     deviceCount: 0,
     chatMessages: [] as ChatMessage[],
   };
