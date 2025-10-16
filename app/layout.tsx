@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FarLive",
+  title: "VexoSocial",
   description: "Create or join live sessions",
 };
 

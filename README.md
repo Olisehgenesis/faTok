@@ -1,4 +1,4 @@
-# FarLive - MediaSoup Live Streaming App
+# VexoSocial - MediaSoup Live Streaming App
 
 A Next.js application with MediaSoup for real-time live streaming with 6-digit room IDs.
 

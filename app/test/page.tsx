@@ -240,7 +240,7 @@ export default function TestPage() {
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">FarLive</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">VexoSocial</h1>
           <p className="text-gray-600 mb-4">Ion-SFU Live Streaming Test</p>
           <div className="text-sm text-gray-500">
             Devices: {creatorStatus === "broadcasting" ? 1 : 0}
@@ -248,7 +248,7 @@ export default function TestPage() {
         </div>
 
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-semibold mb-4">FarLive Debug Test Page</h2>
+          <h2 className="text-2xl font-semibold mb-4">VexoSocial Debug Test Page</h2>
           
           <div className="space-x-4 mb-4">
             <button

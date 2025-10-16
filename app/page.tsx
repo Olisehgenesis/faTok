@@ -21,7 +21,7 @@ export default function Home() {
   return (
     <div className="min-h-screen p-8 sm:p-20 grid place-items-center">
       <main className="flex flex-col items-center gap-6 text-center">
-        <h1 className="text-3xl sm:text-4xl font-semibold">FarLive</h1>
+        <h1 className="text-3xl sm:text-4xl font-semibold">VexoSocial</h1>
         <p className="opacity-80 max-w-xl">
           Start a new live session or join an existing one using a room ID.
         </p>

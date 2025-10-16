@@ -7,7 +7,7 @@ export default function Header() {
   return (
     <header className="w-full border-b border-black/[.08] dark:border-white/[.145]">
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-        <div className="font-semibold">FarLive</div>
+        <div className="font-semibold">VexoSocial</div>
         <div className="flex items-center gap-3">
           <div className="text-sm opacity-80">Devices: {deviceCount}</div>
           <div

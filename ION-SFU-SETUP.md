@@ -1,4 +1,4 @@
-# Ion-SFU Setup for FarLive
+# Ion-SFU Setup for VexoSocial
 
 ## Quick Start
 
@@ -22,10 +22,10 @@ The server will run on:
 - **WebSocket**: `ws://localhost:7000/ws`
 - **HTTP**: `http://localhost:7000`
 
-### 3. Start FarLive
+### 3. Start VexoSocial
 
 ```bash
-# In the FarLive directory
+# In the VexoSocial directory
 pnpm dev
 ```
 
