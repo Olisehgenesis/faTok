@@ -3,21 +3,15 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { clientSessionActions, useClientSession } from "@/app/store/clientSession";
-import { MediaSoupClient } from "@/lib/mediasoup-client";
-import { io } from "socket.io-client";
+import { IonSFUClient } from "@/lib/ion-sfu-client";
 
-// Lazy import mediasoup-client only on client to avoid SSR issues
-async function loadMediasoupClient() {
-  const m = await import("mediasoup-client");
-  return m;
-}
+// Ion-SFU client - no lazy loading needed
 
-export default function JoinRoomPage() {
+export default function ViewRoomPage() {
   const params = useParams<{ roomId: string }>();
   const roomId = useMemo(() => params?.roomId ?? "", [params]);
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState<string | null>(null);
-  const [isCreator, setIsCreator] = useState(false);
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const { chatMessages } = useClientSession();
@@ -33,18 +27,16 @@ export default function JoinRoomPage() {
   useEffect(() => {
     let cancelled = false;
     let sessionId: string | null = null;
-    let socket: any = null;
-    let mediaSoupClient: MediaSoupClient | null = null;
+    let ionSFUClient: IonSFUClient | null = null;
 
     async function init() {
       if (!roomId) return;
       
-      // This route is creator-only
-      setIsCreator(true);
-      
       // Simulate device connect on mount and log session start
       clientSessionActions.incrementDevices();
       setStatus("loading");
+      addDebugLog("🚀 Starting viewer session...");
+      
       try {
         const startRes = await fetch("/api/event", {
           method: "POST",
@@ -52,150 +44,101 @@ export default function JoinRoomPage() {
           body: JSON.stringify({
             type: "session_start",
             roomId,
-            role: "creator",
+            role: "viewer",
             userAgent: navigator.userAgent,
           }),
         });
         const startJson = await startRes.json();
         sessionId = startJson?.session?.id ?? null;
+        addDebugLog("📊 Session logged");
       } catch {}
       
       try {
-        // Connect to Socket.IO server (MediaSoup server runs on port 3004)
-        addDebugLog("🔌 Connecting to MediaSoup server...");
-        socket = io('http://localhost:3004');
+        // Initialize Ion-SFU client
+        addDebugLog("🔌 Connecting to Ion-SFU server...");
+        ionSFUClient = new IonSFUClient();
         
-        // Add socket event listeners for debugging
-        socket.on('connect', () => {
-          addDebugLog("✅ Socket connected");
-        });
-        
-        socket.on('disconnect', () => {
-          addDebugLog("❌ Socket disconnected");
-        });
-        
-        socket.on('error', (error: any) => {
-          addDebugLog(`❌ Socket error: ${error.message || error}`);
-        });
-        
-        socket.on('transport-created', () => {
-          addDebugLog("🚚 Transport created");
-        });
-        
-        socket.on('new-producer', (data: any) => {
-          addDebugLog(`📺 New producer: ${data.producerId} (${data.kind})`);
-        });
-        
-        socket.on('consumer-transport-created', () => {
-          addDebugLog("🚚 Consumer transport created");
-        });
-        
-        socket.on('consumer-created', (data: any) => {
-          addDebugLog(`📹 Consumer created: ${data.id}`);
-        });
-        
-        socket.on('producer-created', (data: any) => {
-          addDebugLog(`📤 Producer created: ${data.id}`);
-        });
-        
-        mediaSoupClient = new MediaSoupClient(socket);
-        
-        // Enable MediaSoup client debugging
-        if (typeof window !== 'undefined') {
-          window.localStorage.setItem('debug', 'mediasoup-client:WARN* mediasoup-client:ERROR* mediasoup-client:DEBUG*');
-          addDebugLog("🔍 MediaSoup debugging enabled");
-        }
-        
-        // Initialize MediaSoup client
-        addDebugLog("🚀 Initializing MediaSoup client...");
-        await mediaSoupClient.initialize(roomId);
-        
-        if (cancelled) return;
-
-        // CREATOR: Access camera and start broadcasting
-        addDebugLog("🎥 Creator mode: Starting broadcast");
-        console.log("🎥 Creator mode: Starting broadcast");
-        console.log("📱 Requesting camera access...");
-        
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { 
-            width: { ideal: 1920 },
-            height: { ideal: 1080 },
-            frameRate: { ideal: 30 },
-            facingMode: "user"
-          }, 
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
-            sampleRate: 48000
+        // Set up track callback
+        ionSFUClient.setOnTrack((track: MediaStreamTrack, stream: MediaStream) => {
+          addDebugLog("📺 Track received!");
+          console.log("📺 Track received:", {
+            id: track.id,
+            kind: track.kind,
+            label: track.label,
+            enabled: track.enabled,
+            muted: track.muted,
+            readyState: track.readyState
+          });
+          
+          if (videoRef.current) {
+            console.log("🎬 Setting up video element for viewer...");
+            videoRef.current.srcObject = stream;
+            videoRef.current.setAttribute('playsinline', 'true');
+            videoRef.current.setAttribute('webkit-playsinline', 'true');
+            
+            // Add event listeners for debugging
+            videoRef.current.addEventListener('loadedmetadata', () => {
+              console.log(`📹 Viewer video loaded: ${videoRef.current?.videoWidth}x${videoRef.current?.videoHeight}`);
+              addDebugLog(`📹 Video loaded: ${videoRef.current?.videoWidth}x${videoRef.current?.videoHeight}`);
+            });
+            
+            videoRef.current.addEventListener('canplay', () => {
+              console.log("🎬 Viewer video can play");
+              addDebugLog("🎬 Video can play");
+            });
+            
+            videoRef.current.addEventListener('playing', () => {
+              console.log("▶️ Viewer video is playing");
+              addDebugLog("▶️ Video is playing");
+            });
+            
+            videoRef.current.addEventListener('error', (e) => {
+              console.error("❌ Viewer video error:", e);
+              addDebugLog("❌ Video error");
+            });
+            
+            videoRef.current.play().catch((err) => {
+              console.error("❌ Failed to play viewer video:", err);
+              addDebugLog("❌ Failed to play video");
+            });
+            
+            console.log('🎥 Video stream displayed');
+            addDebugLog('🎥 Video stream displayed');
           }
         });
         
-        addDebugLog("✅ Camera access granted!");
-        console.log("✅ Camera access granted!");
-        console.log("📹 Video tracks:", stream.getVideoTracks().length);
-        console.log("🎵 Audio tracks:", stream.getAudioTracks().length);
-        
-        if (stream.getVideoTracks().length > 0) {
-          const videoTrack = stream.getVideoTracks()[0];
-          console.log("📹 Video track details:", {
-            id: videoTrack.id,
-            kind: videoTrack.kind,
-            label: videoTrack.label,
-            enabled: videoTrack.enabled,
-            muted: videoTrack.muted,
-            readyState: videoTrack.readyState
-          });
-        }
+        // Initialize Ion-SFU client
+        addDebugLog("🚀 Initializing Ion-SFU client...");
+        await ionSFUClient.initialize(roomId, 'ws://localhost:7000/ws');
         
         if (cancelled) return;
+
+        // Start subscribing to streams
+        addDebugLog("👀 Viewer mode: Starting subscription");
+        await ionSFUClient.startSubscribing();
+        
+        // Show placeholder while waiting
         if (videoRef.current) {
-          console.log("🎬 Setting up video element for creator...");
-          videoRef.current.srcObject = stream;
-          videoRef.current.setAttribute('playsinline', 'true');
-          videoRef.current.setAttribute('webkit-playsinline', 'true');
-          
-          // Add event listeners for debugging
-          videoRef.current.addEventListener('loadedmetadata', () => {
-            console.log(`📹 Creator video loaded: ${videoRef.current?.videoWidth}x${videoRef.current?.videoHeight}`);
-            console.log(`📹 Video duration: ${videoRef.current?.duration}`);
-            addDebugLog(`📹 Video loaded: ${videoRef.current?.videoWidth}x${videoRef.current?.videoHeight}`);
-          });
-          
-          videoRef.current.addEventListener('canplay', () => {
-            console.log("🎬 Creator video can play");
-            addDebugLog("🎬 Video can play");
-          });
-          
-          videoRef.current.addEventListener('playing', () => {
-            console.log("▶️ Creator video is playing");
-            addDebugLog("▶️ Video is playing");
-          });
-          
-          videoRef.current.addEventListener('error', (e) => {
-            console.error("❌ Creator video error:", e);
-            addDebugLog("❌ Video error");
-          });
-          
-          await videoRef.current.play().catch((err) => {
-            console.error("❌ Failed to play creator video:", err);
-            addDebugLog("❌ Failed to play video");
-          });
+          console.log("⏳ Setting up waiting placeholder...");
+          videoRef.current.style.backgroundColor = '#000';
+          videoRef.current.style.display = 'flex';
+          videoRef.current.style.alignItems = 'center';
+          videoRef.current.style.justifyContent = 'center';
+          videoRef.current.style.color = 'white';
+          videoRef.current.style.fontSize = '18px';
+          videoRef.current.innerHTML = 'Waiting for stream...';
         }
         
-        // Start MediaSoup producer with this stream
-        console.log("🚀 Starting MediaSoup producer...");
-        addDebugLog("🚀 Starting producer...");
-        await mediaSoupClient.startProducing(stream);
-        setStatus("broadcasting");
-        addDebugLog("✅ Broadcasting started");
+        setStatus("viewing");
+        addDebugLog("✅ Viewer ready");
 
-        console.log("MediaSoup client initialized successfully");
+        console.log("Ion-SFU client initialized successfully");
       } catch (err: any) {
         if (cancelled) return;
-        setError(err?.message ?? String(err));
+        const errorMsg = err?.message ?? String(err);
+        setError(errorMsg);
         setStatus("error");
+        addDebugLog(`❌ Error: ${errorMsg}`);
       }
     }
 
@@ -204,14 +147,9 @@ export default function JoinRoomPage() {
       cancelled = true;
       clientSessionActions.decrementDevices();
       
-      // Cleanup MediaSoup resources
-      if (mediaSoupClient) {
-        mediaSoupClient.cleanup();
-      }
-      
-      // Disconnect socket
-      if (socket) {
-        socket.disconnect();
+      // Cleanup Ion-SFU resources
+      if (ionSFUClient) {
+        ionSFUClient.cleanup();
       }
       
       // Log session end
@@ -322,10 +260,10 @@ export default function JoinRoomPage() {
         <div className="bg-black/20 backdrop-blur-sm rounded-lg p-3 text-white">
           <h1 className="text-lg font-semibold mb-1">
             Room: {roomId || "(missing)"} 
-            <span className="text-yellow-300 ml-2">🎥 LIVE</span>
+            <span className="text-blue-300 ml-2">👀 VIEWING</span>
           </h1>
           <div className="text-sm opacity-80">
-            Status: {status} (Broadcaster)
+            Status: {status} (Viewer)
           </div>
           {error && (
             <div className="text-red-300 text-sm mt-1" role="alert">{error}</div>
@@ -347,10 +285,19 @@ export default function JoinRoomPage() {
               </div>
             ))}
           </div>
+          <div className="mt-2 pt-2 border-t border-white/20">
+            <button 
+              onClick={() => {
+                addDebugLog("🔍 Testing Ion-SFU connection...");
+                addDebugLog("📡 Ion-SFU uses WebSocket signaling, no manual test needed");
+              }}
+              className="text-xs bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded"
+            >
+              Test Connection
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
 }
-
-
