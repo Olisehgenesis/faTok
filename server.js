@@ -1,7 +1,6 @@
 const { createServer } = require('http');
 const { parse } = require('url');
 const next = require('next');
-const MediaSoupServer = require('./lib/mediasoup-server');
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = 'localhost';
@@ -24,21 +23,16 @@ app.prepare().then(() => {
     }
   });
 
-  // Initialize MediaSoup server
-  const mediaSoupServer = new MediaSoupServer();
-  mediaSoupServer.initialize(server);
-
   // Start server
   server.listen(port, (err) => {
     if (err) throw err;
     console.log(`> Ready on http://${hostname}:${port}`);
-    console.log(`> MediaSoup server running on port ${port}`);
+    console.log(`> Next.js server running on port ${port}`);
   });
 
   // Graceful shutdown
   process.on('SIGTERM', async () => {
     console.log('SIGTERM received, shutting down gracefully');
-    await mediaSoupServer.close();
     server.close(() => {
       console.log('Process terminated');
     });

@@ -20,8 +20,6 @@
   "dependencies": {
     "@prisma/client": "^6.17.1",
     "ion-sdk-js": "^1.8.2",
-    "mediasoup": "^3.19.3",
-    "mediasoup-client": "^3.6.105",
     "next": "15.5.5",
     "react": "19.1.0",
     "react-dom": "19.1.0",
